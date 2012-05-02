@@ -45,7 +45,7 @@ namespace TinkDifferent
 			scroll_thread.Start();
 		}
 		
-		public void setTextForLine(int line_number, string text) {
+		public void setTextForLine(byte line_number, string text) {
 			mutex.WaitOne();
 			display[line_number] = text;
 			delay[line_number] = DateTime.Now;
