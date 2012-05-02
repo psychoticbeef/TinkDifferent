@@ -51,6 +51,7 @@ namespace TinkDifferent
 			delay[line_number] = DateTime.Now;
 			current_character_offset[line_number] = 0;
 			scroll_direction[line_number] = false;
+			lcd.WriteLine(line_number, 0, text);
 			mutex.ReleaseMutex();
 		}
 		
@@ -67,7 +68,6 @@ namespace TinkDifferent
 					TimeSpan ts;
 					
 				// case 1: first character or last, i.e. we wait for initial_scroll_delay
-					if (i == 3)
 					if (current_character_offset[i] == 0 || current_character_offset[i] == display[i].Length - 20) {
 						ts = DateTime.Now.Subtract(delay[i]);
 						if (ts.Milliseconds + ts.Seconds * 1000 + ts.Minutes * 60 * 1000 >= Initial_Scroll_Delay) {

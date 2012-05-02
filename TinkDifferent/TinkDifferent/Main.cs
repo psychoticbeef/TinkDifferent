@@ -123,7 +123,7 @@ namespace TinkDifferent {
 					
 					dataReceived = dataReceived.Substring(0, dataReceived.Length - cnt_crap);
 #if DEBUG
-					Console.WriteLine(dataReceived+ " " + dataReceived.Length);
+					Console.WriteLine(dataReceived + " " + dataReceived.Length);
 #endif
 					if (dataReceived != null) {
 						displayHelper.setTextForLine(3, dataReceived);
@@ -137,17 +137,20 @@ namespace TinkDifferent {
 		public static IPConnection brick_connection;
 		
 		public static void Main (string[] args) {
-			if (init(ref brick_connection)) {
-				setup();
-			
-				displayHelper.setTextForLine(0, "Hello World!");
-				
-				temperature.SetTemperatureCallbackPeriod(1000);
-				temperature.RegisterCallback(new BrickletTemperature.Temperature(TemperatureCB));
-				
-				ambient_light.SetIlluminanceCallbackPeriod(1000);
-				ambient_light.RegisterCallback(new BrickletAmbientLight.Illuminance(IlluminanceCB));
+			if (!init(ref brick_connection)) {
+				Console.WriteLine("Connection could to brickd not be esthablished.");
+				Environment.Exit(1);
 			}
+			
+			setup();
+			
+			displayHelper.setTextForLine(0, "Hello World!");
+				
+			temperature.SetTemperatureCallbackPeriod(1000);
+			temperature.RegisterCallback(new BrickletTemperature.Temperature(TemperatureCB));
+				
+			ambient_light.SetIlluminanceCallbackPeriod(1000);
+			ambient_light.RegisterCallback(new BrickletAmbientLight.Illuminance(IlluminanceCB));
 			
 			Thread udp_thread = new Thread(new ThreadStart(udp_server));
 			udp_thread.Start();
