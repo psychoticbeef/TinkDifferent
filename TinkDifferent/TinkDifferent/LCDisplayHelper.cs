@@ -35,8 +35,8 @@ namespace TinkDifferent
 			if (text.Length > 20)
 				result = text.Substring(0, 20);
 			else
-				while (text.Length < 20)
-					text += " ";
+				while (result.Length < 20)
+					result += " ";
 				
 			return result;
 		}
