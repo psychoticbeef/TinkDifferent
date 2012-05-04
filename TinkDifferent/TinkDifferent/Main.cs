@@ -75,7 +75,7 @@ namespace TinkDifferent {
 		//***************************
 		
 		static void TemperatureCB(short temperature) {
-			string result = temperature/100.0 + " °C";
+			string result = temperature/100.0 + " C";
 			displayHelper.setTextForLine(1, result);
 #if DEBUG
 			Console.WriteLine(result);
@@ -130,6 +130,8 @@ namespace TinkDifferent {
 					Console.WriteLine(dataReceived + " " + dataReceived.Length);
 #endif
 					if (dataReceived != null) {
+						IPEndPoint ep = remoteEP as  IPEndPoint;
+						displayHelper.setTextForLine(0, ep.Address.ToString());
 						displayHelper.setTextForLine(3, dataReceived);
 					}
 				}
@@ -149,10 +151,17 @@ namespace TinkDifferent {
 			setup();
 			
 			displayHelper.setTextForLine(0, "Hello World!");
-				
+			
+			short temp_out;
+			ushort light_out;
+			temperature.GetTemperature(out temp_out);
+			displayHelper.setTextForLine(1, (temp_out/100.0) + " C");
+			ambient_light.GetIlluminance(out light_out);
+			displayHelper.setTextForLine(2, (light_out/10.0) + " Lux");
+			
 			temperature.SetTemperatureCallbackPeriod(1000);
 			temperature.RegisterCallback(new BrickletTemperature.Temperature(TemperatureCB));
-				
+			
 			ambient_light.SetIlluminanceCallbackPeriod(1000);
 			ambient_light.RegisterCallback(new BrickletAmbientLight.Illuminance(IlluminanceCB));
 			
