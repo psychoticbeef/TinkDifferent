@@ -29,6 +29,18 @@ namespace TinkDifferent
 		private LCDisplayHelper() {
 		}
 		
+		private string PadText(string text) {
+			string result = text;
+			
+			if (text.Length > 20)
+				result = text.Substring(0, 20);
+			else
+				while (text.Length < 20)
+					text += " ";
+				
+			return result;
+		}
+		
 		public LCDisplayHelper(BrickletLCD20x4 lcd) {
 			this.lcd = lcd;
 			Initial_Scroll_Delay = 4000;
@@ -51,7 +63,7 @@ namespace TinkDifferent
 			delay[line_number] = DateTime.Now;
 			current_character_offset[line_number] = 0;
 			scroll_direction[line_number] = false;
-			lcd.WriteLine(line_number, 0, text);
+			lcd.WriteLine(line_number, 0, PadText(text));
 			mutex.ReleaseMutex();
 		}
 		

@@ -61,9 +61,13 @@ namespace TinkDifferent {
 		}
 		
 		public static void setup() {
-			lcd.BacklightOff();
+			lcd.BacklightOn();
 			lcd.ClearDisplay();
 			lcd.SetConfig(false, false);
+			lcd.WriteLine(0, 0, "                    ");
+			lcd.WriteLine(1, 0, "                    ");
+			lcd.WriteLine(2, 0, "                    ");
+			lcd.WriteLine(3, 0, "                    ");
 		}
 		
 		//***************************
