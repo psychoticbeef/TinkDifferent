@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.IO;
 using Tinkerforge;
 
 namespace TinkDifferent {
@@ -17,6 +18,24 @@ namespace TinkDifferent {
 		public static BrickletLCD20x4 lcd;
 		
 		public static LCDisplayHelper displayHelper;
+		
+		// year 2038 problem. lol xD
+		public static int GetUnixTimestamp()
+{
+    try
+    {
+        DateTime startDate = new DateTime(1970, 1, 1);
+        TimeSpan diffSpan = new TimeSpan(DateTime.Now.Ticks - startDate.Ticks);
+        return Convert.ToInt32(diffSpan.TotalSeconds);
+    }
+    catch (Exception err)
+    {
+        Console.WriteLine(err.Message);
+        return 0;
+    }
+}  
+		
+		
 		
 		public static bool init(ref IPConnection brick_connection) {
 			
@@ -60,8 +79,11 @@ namespace TinkDifferent {
 			return true;
 		}
 		
+		static bool backlight_state;
+		
 		public static void setup() {
-			lcd.BacklightOn();
+			lcd.BacklightOff();
+			backlight_state = false;
 			lcd.ClearDisplay();
 			lcd.SetConfig(false, false);
 			lcd.WriteLine(0, 0, "                    ");
@@ -77,6 +99,9 @@ namespace TinkDifferent {
 		static void TemperatureCB(short temperature) {
 			string result = temperature/100.0 + " C";
 			displayHelper.setTextForLine(1, result);
+			using (StreamWriter w = File.AppendText("temperature.log")) {
+				w.WriteLine(GetUnixTimestamp().ToString() + "\t" + (temperature/100.0).ToString().Replace(',', '.'));
+			}
 #if DEBUG
 			Console.WriteLine(result);
 #endif
@@ -85,6 +110,9 @@ namespace TinkDifferent {
 		static void IlluminanceCB(ushort illuminance) {
 			string result = illuminance/10.0 + " Lux";
         	displayHelper.setTextForLine(2, result);
+			using (StreamWriter w = File.AppendText("illumination.log")) {
+				w.WriteLine(GetUnixTimestamp().ToString() + "\t" + (illuminance/10.0).ToString().Replace(',', '.'));
+			}
 #if DEBUG
 			Console.WriteLine(result);
 #endif
@@ -112,7 +140,14 @@ namespace TinkDifferent {
 					IPEndPoint tmpIpEndPoint = new IPEndPoint(localHostEntry.AddressList[0], server_port);
 					EndPoint remoteEP = (tmpIpEndPoint);
 					int bytesReceived = soUdp.ReceiveFrom(received, ref remoteEP);
-					String dataReceived = (System.Text.Encoding.UTF8.GetString(received)).Trim();
+					String dataReceived = System.Text.Encoding.UTF8.GetString(received);	// could explode on non utf-8 string. not sure :]
+					if (dataReceived == null) {
+						dataReceived = string.Empty;
+					}
+					
+					dataReceived = dataReceived.Trim();
+					dataReceived = dataReceived.Replace('\n', ' ');
+					dataReceived = dataReceived.Replace('\r', ' ');
 					
 					/* int truncated_length = Math.Min(20, dataReceived.Length);
 					if (dataReceived != null)
@@ -137,6 +172,20 @@ namespace TinkDifferent {
 				}
 			} catch (SocketException se) {
 				Console.WriteLine("A Socket Exception has occurred!" + se.ToString());
+			}
+		}
+		
+		// sleeping with that thing on is unpossibru
+		public static void backlight() {
+			while (true) {
+				if ((DateTime.Now.Hour >= 22 || DateTime.Now.Hour < 8) && backlight_state) {
+					lcd.BacklightOff();
+					backlight_state = !backlight_state;
+				} else if ((DateTime.Now.Hour < 22 && DateTime.Now.Hour >= 8) && !backlight_state) {
+					lcd.BacklightOn();
+					backlight_state = !backlight_state;
+				}
+				Thread.Sleep(60 * 1000);
 			}
 		}
 		
@@ -167,6 +216,9 @@ namespace TinkDifferent {
 			
 			Thread udp_thread = new Thread(new ThreadStart(udp_server));
 			udp_thread.Start();
+			
+			Thread backlight_thread = new Thread(new ThreadStart(backlight));
+			backlight_thread.Start();
 			
 			brick_connection.JoinThread();
 		}
